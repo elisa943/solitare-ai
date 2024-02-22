@@ -195,6 +195,18 @@ class FoundationPiles():
         else:
             self.cardsOnPiles[s] -= 1
 
+    def game_won(self):
+        """
+        Returns True if the game is won
+        """
+        for i in range(NUM_PILES):
+            
+            if self.cardsOnPiles[Suit(i)] != Rank(13):
+                return False
+
+        return True 
+
+
 class Player():
     def __init__(self, deck, table, foundationPiles):
         self.deck = deck
@@ -210,6 +222,7 @@ class PlayerAI():
 
 d = Deck()
 t = Table(d)
+f = FoundationPiles()
 
 pygame.display.quit()
 pygame.quit()
