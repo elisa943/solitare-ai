@@ -73,19 +73,22 @@ class Deck():
 
     # Picks one card at the top of the deck
     def picks_card(self, withdraw=True):
+        cardPicked = None
 
-        cardPicked = self.stockpile.pop(-1)
+        if len(self.stockpile) > 0:
+            cardPicked = self.stockpile.pop(-1)
 
-        # If asked not to withdraw the card, puts it back in the deck 
-        if not(withdraw):
-            self.stockpile.append(card)
+            # If asked not to withdraw the card, puts it back in the deck 
+            if not(withdraw):
+                self.stockpile.append(card)
 
         return cardPicked
     
     def reinitialize_deck(self):
         # If the deck is empty, re-initialize it
         if len(self.stockpile) == 0:
-            self.stockpile = self.cardsShown.reverse()
+            self.cardsShown.reverse()
+            self.stockpile = self.cardsShown
             self.cardsShown = []
 
         # Else, does nothing
@@ -174,10 +177,10 @@ class Table():
 
     def contains_card(self, index, card):
         """
-        Checks if the index contains the card
+        Checks if the index contains the card (not hidden)
         """
-        for (c, hidden) in self.cardsOnTable[index]:
-            if not(hidden) and c == card:
+        for c in self.cardsOnTable[index]:
+            if not(c[1]) and c[0] == card:
                 return True 
         return False 
 
@@ -255,7 +258,6 @@ class Table():
 
         return foundationPiles.cardsOnPiles[suit] == rank.value - 1
 
-
     def makes_move_in_table(self, move):
         """
         Makes a move whether or not it's a valid one. 
@@ -287,17 +289,27 @@ class Table():
         # Represents the index of the last card in the table's index
         j = len(self.cardsOnTable[index]) - 1
         
+        # If the table's index is not empty, returns the position of its last card
         if j > -1:
             positionOfCard = (170*index + self.STARTING_POSITION_TABLE[0], 20*j + self.STARTING_POSITION_TABLE[1])
             return (positionOfCard[0], positionOfCard[1], WIDTH, HEIGHT)
+        # Else, the table is empty
         else:
             positionOfCard = (170*index + self.STARTING_POSITION_TABLE[0], self.STARTING_POSITION_TABLE[1])
             return (positionOfCard[0], positionOfCard[1], WIDTH, HEIGHT)
+    
+    def deletes_card(self, card, index):
+        if not(self.contains_card(index, card[0])):
+            print(card, index, self.cardsOnTable[index])
+            raise ImplementationError
+        else:
+            self.cardsOnTable[index].remove(card)
 
 class FoundationPiles():
     def __init__(self):
-        self.cardsOnPiles = {}
         self.STARTING_POSITION_PILES = (520, 10)
+
+        self.cardsOnPiles = {}
         for i in range(NUM_PILES):
             self.cardsOnPiles[Suit(i)] = 0
     
@@ -323,20 +335,26 @@ class FoundationPiles():
                 return False
 
         return True 
-    
-    def adds_to_piles(self, card):
-        """
-        Returns True of the card can be added on top of the pile foundation
-        """
-        rank = card[0]
-        suit = card[1]
 
+    def can_be_moved_in_foundation(self, theCard):
+        """
+        Returns True of the card can be added on top of the pile foundation. 
+        """
+        rank = theCard[0][0]
+        suit = theCard[0][1]
+        hidden = theCard[1]
+        
         # If card can be added on pile foundation, then it's added and returns True
-        if self.cardsOnPiles[suit] == rank - 1:
-            self.cardsOnPiles[suit] += 1
-            return True
-        else:
-            return False
+        return self.cardsOnPiles[suit] == rank.value - 1 and not(hidden)
+
+
+    def adds_to_piles(self, suit):
+        """
+        Adds a card to the suit's foundation pile. 
+        """
+
+        self.cardsOnPiles[suit] += 1
+
     
     def displays_foundation_piles(self, screen):
         i = 0

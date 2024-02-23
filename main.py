@@ -22,34 +22,68 @@ class Player():
         """
         return rectangle[0] <= mouse[0] <= rectangle[0] + rectangle[2] and rectangle[1] <= mouse[1] <= rectangle[1] + rectangle[3]
 
-    def event_triggered(self, deck, table):
+    def event_triggered(self, deck, table, foundationPiles):
         """
-        Draws cards from deck if even was triggered. 
-        If the deck is empty, it rinitialize it. 
+        Deals with different events : 
+        - If the player clicks on the deck : draws cards from deck or if the deck is empty, it rinitialize it. 
+        - If the player clicks on a card that can be moved to a foundation pile : it does that move. 
         """
+        # Takes the position IF the mouse is pressed 
         mouse_position = self.is_mouse_pressed()
         
+        # If the mouse is not pressed, return False (no event was triggered)
         if mouse_position == None:
             return False
-        else:
             
-            # Checks if the mouse pressed on the deck 
-            deckPosition = deck.get_position_deck()
+        # Checks if the mouse pressed on the deck 
+        deckPosition = deck.get_position_deck()
+        
+        # If the mouse clicked on the deck, draws up to 3 cards or re-initialized the deck
+        if self.is_mouse_in_rectangle(deckPosition, mouse_position):
+            deck.picks_3_cards()
+            return True 
+
+        # Checks if the mouse clicked on a card
+        for i in range(len(table.cardsOnTable)):
             
-            # If the mouse clicked on the deck, draws up to 3 cards or re-initialized the deck
-            if self.is_mouse_in_rectangle(deckPosition, mouse_position):
-                deck.picks_3_cards()
+            # ! For now : only checks if the last card was clicked on 
 
-            # If the mouse clicked on a card
-            for i in range(len(table.cardsOnTable)):
-                
-                # Represents the position of the last card, including its size. 
-                positionLastCard = table.get_position_last_card(i)
+            # Takes the position of the last card, including its size : (x, y, w, h)
+            positionLastCard = table.get_position_last_card(i)
 
-                # If the mouse clicked on a the last card of 
-                if self.is_mouse_in_rectangle(positionLastCard, mouse_position):
-                    print("hello")
+            # Check if the table's index is empty
+            empty = len(table.cardsOnTable[i]) == 0
+
+            # If the mouse clicked on the last card of a pile and the pile isn't empty, checks if the card can be moved
+            if self.is_mouse_in_rectangle(positionLastCard, mouse_position) and not(empty):
                 
+                # Checks is the card can be moved in its foundation pile 
+
+                # lastCard represents the last of the i-th pile
+                lastCard = table.cardsOnTable[i][-1]
+
+                # If the card can be added to its foundation pile
+                if foundationPiles.can_be_moved_in_foundation(lastCard):
+
+                    # The card is added to its foundation pile
+                    foundationPiles.adds_to_piles(lastCard[0][1])
+
+                    # And is deleted from its previous pile
+                    table.deletes_card(lastCard, i)
+
+                    # Reveals the last card if possible 
+                    if len(table.cardsOnTable[i]) > 0:
+                        newLastCard = (table.cardsOnTable[i][-1][0], False)
+                        table.cardsOnTable[i].pop(-1)
+                        table.cardsOnTable[i].append(newLastCard)
+
+
+                # ! Checks if it can be moved to another pile in the table
+                
+                break
+        
+        
+        return False
 
     def initialize_pygame(self):
         # Initialization
@@ -63,6 +97,14 @@ class Player():
         pygame.display.set_icon(icon)
 
         return screen
+
+    def draws_window(self, screen, deck, table, foundationPiles):
+        screen.fill(BACKGROUND_COLOR)
+        deck.displays_closed_deck(screen)
+        deck.displays_open_deck(screen)
+        table.displays_table(screen)
+        foundationPiles.displays_foundation_piles(screen)
+        pygame.display.update()
 
     def close_pygame(self):
         pygame.display.quit()
@@ -90,15 +132,6 @@ class PlayerAI():
         return possible_actions
 
 
-def draws_window(screen, deck, table, foundationPiles):
-    screen.fill(BACKGROUND_COLOR)
-    deck.displays_closed_deck(screen)
-    deck.displays_open_deck(screen)
-    table.displays_table(screen)
-    foundationPiles.displays_foundation_piles(screen)
-    pygame.display.update()
-
-
 def main():
 
     theDeck = Deck()
@@ -108,7 +141,7 @@ def main():
     screen = thePlayer.initialize_pygame()
     running = True
 
-    draws_window(screen, theDeck, theTable, theFoundationPiles)
+    thePlayer.draws_window(screen, theDeck, theTable, theFoundationPiles)
 
     theDeck.displays_open_deck(screen)
 
@@ -116,7 +149,7 @@ def main():
 
         # Quit 
         for event in pygame.event.get():
-            thePlayer.event_triggered(theDeck, theTable)
+            thePlayer.event_triggered(theDeck, theTable, theFoundationPiles)
 
             if event.type == pygame.QUIT:
                 running = False
@@ -125,7 +158,7 @@ def main():
         if theFoundationPiles.game_won():
             running = False 
 
-        draws_window(screen, theDeck, theTable, theFoundationPiles)
+        thePlayer.draws_window(screen, theDeck, theTable, theFoundationPiles)
     
     thePlayer.close_pygame()
 
