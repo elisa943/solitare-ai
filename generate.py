@@ -1,15 +1,22 @@
+import pygame
+from enum import Enum
+import random
+
 # Variables
 NUM_TABLE = 7
 NUM_PILES = 4
 NUM_RANKS = 14
 NUM_SUITS = 4
 
+BACKGROUND_COLOR = (34, 139, 34) # Forest green 
+
+imgClosedCard = pygame.image.load("images/Cards/cardBack_red2.png")
+
 class ImplementationError(Exception):
     pass
 
 class Rank(Enum):
-    ACE = 0
-    ONE = 1
+    ACE = 1
     TWO = 2
     THREE = 3
     FOUR = 4
@@ -29,13 +36,32 @@ class Suit(Enum):
     SPADES = 2
     HEARTS = 3
 
+def suit_string_conversion(suit):
+    match suit.value:
+        case 0:
+            return "Clubs"
+        case 1:
+            return "Diamonds"
+        case 2:
+            return "Spades"
+        case _:
+            return "Hearts"
+
+def img_card(card):
+    (rank, suit) = card
+    suit_string = suit_string_conversion(suit)
+    rank_string = str(rank.value)
+    return pygame.image.load("images/Cards/card" + suit_string + rank_string + ".png")
+
 class Deck():
     def __init__(self):
         self.stockpile = []
         self.cardsShown = []
+        self.ClOSED_DECK_POSITION = (10, 10)
+        self.OPEN_DECK_POSITION = (200, 10)
 
         # Adds all possible cards
-        for i in range(14):
+        for i in range(1, 14):
             for j in range(4):
                 self.stockpile.append((Rank(i), Suit(j)))
 
@@ -75,10 +101,19 @@ class Deck():
             newCard = self.picks_card()
             self.cardsShown.append(newCard)
 
+    def displays_closed_deck(self, screen):
+        if len(self.stockpile) != 0:
+            screen.blit(imgClosedCard, self.ClOSED_DECK_POSITION)
+
+    def displays_open_deck(self, screen):
+        if len(self.cardsShown) != 0:
+            imgOpenDeck = img_card(self.cardsShown[-1])
+            screen.blit(imgOpenDeck, self.OPEN_DECK_POSITION)
 
 class Table():
     def __init__(self, startingDeck):
         self.cardsOnTable = [[] for _ in range(NUM_TABLE)]
+        self.STARTING_POSITION_TABLE = (10, 220)
 
         # Each part of the table is a Queue containing tuples (card, hidden) with hidden being a boolean
         for i in range(NUM_TABLE):
@@ -89,7 +124,27 @@ class Table():
 
             # Adds the first card shown
             self.cardsOnTable[i].append((startingDeck.picks_card(), False))
-    
+
+    def table_content(self):
+        for i in range(NUM_TABLE):
+            for j in range(len(self.cardsOnTable[i])):
+                print(self.cardsOnTable[i][j], end="")
+            
+            print("\n")
+
+    def displays_table(self, screen):
+        for i in range(len(self.cardsOnTable)):
+            for j in range(len(self.cardsOnTable[i])):
+                (card, hidden) = self.cardsOnTable[i][j]
+                positionOfCard = (170*i + self.STARTING_POSITION_TABLE[0], 20*j + self.STARTING_POSITION_TABLE[1])
+                
+                # If the card is not hiddenn then it is shown on screen
+                if not hidden:
+                    screen.blit(img_card(card), positionOfCard)
+                # Else, we show a closed card
+                else:
+                    screen.blit(imgClosedCard, positionOfCard)
+
     def cards_compatible(self, cardUp, cardDown):
         """
         Returns True if we can put cardDown under cardUp
@@ -178,7 +233,6 @@ class Table():
             # Reveals the last card from source index if possible 
             if len(self.cardsOnTable[source]) > 0:
                 self.cardsOnTable[source][-1][1] = False 
-
             return True
         else:
             return False
@@ -187,8 +241,9 @@ class Table():
 class FoundationPiles():
     def __init__(self):
         self.cardsOnPiles = {}
+        self.STARTING_POSITION_PILES = (520, 10)
         for i in range(NUM_PILES):
-            self.cardsOnPiles[Suit(i)] = -1
+            self.cardsOnPiles[Suit(i)] = 2
     
     def receives_card(self, s):
         if self.cardsOnPiles[s] == KING:
@@ -226,3 +281,13 @@ class FoundationPiles():
             return True
         else:
             return False
+    
+    def displays_foundation_piles(self, screen):
+        i = 0
+        for pile in self.cardsOnPiles:
+            if self.cardsOnPiles[pile] >= 1:
+                card = (Rank(self.cardsOnPiles[pile]), Suit(i))
+                positionOfPiles = (170*i + self.STARTING_POSITION_PILES[0], self.STARTING_POSITION_PILES[1])
+                screen.blit(img_card(card), positionOfPiles)
+            i += 1
+
