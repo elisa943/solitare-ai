@@ -35,7 +35,7 @@ class Player():
         if mouse_position == None:
             return False
             
-        # Checks if the mouse pressed on the deck 
+        #  * Checks if the mouse pressed on the deck 
         deckPosition = deck.get_position_deck()
         
         # If the mouse clicked on the deck, draws up to 3 cards or re-initialized the deck
@@ -43,7 +43,18 @@ class Player():
             deck.picks_3_cards()
             return True 
 
-        # Checks if the mouse clicked on a card
+        # * Checks if the mouse clicked on the open deck 
+        openDeckPostion = deck.get_position_deck(True)
+
+        # If the mouse clicked on the open deck, places the card
+        if self.is_mouse_in_rectangle(openDeckPostion, mouse_position):
+            cardShown = None if len(deck.cardsShown) == 0 else (deck.cardsShown[-1], False)
+            if cardShown != None:
+                foundationPiles.places_card(cardShown, deck, table)
+            else:
+                return False
+
+        # * Checks if the mouse clicked on a card on the table 
         for i in range(len(table.cardsOnTable)):
             
             # ! For now : only checks if the last card was clicked on 

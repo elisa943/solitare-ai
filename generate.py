@@ -120,11 +120,23 @@ class Deck():
             positionOfShownCards = (self.OPEN_DECK_POSITION[0] - 20*i, self.OPEN_DECK_POSITION[1])
             screen.blit(imgOpenDeck, positionOfShownCards)
 
-    def get_position_deck(self):
+    def get_position_deck(self, open=False):
         """
         Returns (x, y, width, height) of the deck
         """
-        return (self.CLOSED_DECK_POSITION[0], self.CLOSED_DECK_POSITION[1], WIDTH, HEIGHT)
+        if not(open):
+            return (self.CLOSED_DECK_POSITION[0], self.CLOSED_DECK_POSITION[1], WIDTH, HEIGHT)
+        else:
+            return (self.OPEN_DECK_POSITION[0] - 40, self.OPEN_DECK_POSITION[1], 40 + WIDTH, HEIGHT)
+
+    def deletes_shown_card(self):
+        """ 
+        If possible, deletes the last shown card
+        """
+        # If some cards are shown
+        if len(self.cardsShown) > 0:
+            self.cardsShown.pop(-1)
+
 
 class Table():
     def __init__(self, startingDeck):
@@ -325,7 +337,7 @@ class FoundationPiles():
         else:
             self.cardsOnPiles[s] -= 1
 
-    def game_won(self):
+    def game_won(self) -> bool:
         """
         Returns True if the game is won
         """
@@ -340,6 +352,7 @@ class FoundationPiles():
         """
         Returns True of the card can be added on top of the pile foundation. 
         """
+        
         rank = theCard[0][0]
         suit = theCard[0][1]
         hidden = theCard[1]
@@ -354,8 +367,30 @@ class FoundationPiles():
         """
 
         self.cardsOnPiles[suit] += 1
-
     
+    def places_card(self, theCard, deck, table, index=None):
+        """
+        Given a card, places the card in its foundation pile IF possible
+        - If index is None, then the card is from the deck
+        - Else, index represents the index of the card in the table
+        """
+        # If the card is from the deck 
+        if index == None:
+            
+            # If theCard can be moved in its foundation pile
+            if self.can_be_moved_in_foundation(theCard):
+                
+                # The card is added to its foundation pile
+                self.adds_to_piles(theCard[0][1])
+
+                # And is deleted from its previous pile 
+                deck.deletes_shown_card()
+        
+        # Else, the card is from the table
+        else:
+            print("oh well...")
+
+
     def displays_foundation_piles(self, screen):
         i = 0
         for pile in self.cardsOnPiles:
