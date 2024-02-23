@@ -8,6 +8,9 @@ NUM_PILES = 4
 NUM_RANKS = 14
 NUM_SUITS = 4
 
+WIDTH = 140
+HEIGHT = 190
+
 BACKGROUND_COLOR = (34, 139, 34) # Forest green 
 
 imgClosedCard = pygame.image.load("images/Cards/cardBack_red2.png")
@@ -57,7 +60,7 @@ class Deck():
     def __init__(self):
         self.stockpile = []
         self.cardsShown = []
-        self.ClOSED_DECK_POSITION = (10, 10)
+        self.CLOSED_DECK_POSITION = (10, 10)
         self.OPEN_DECK_POSITION = (200, 10)
 
         # Adds all possible cards
@@ -87,28 +90,38 @@ class Deck():
 
         # Else, does nothing
 
-    def shows_3_cards(self):
+    def picks_3_cards(self):
         """
-        Displays up to 3 cards by adding them to self.cardsShown
+        Adds up to 3 cards to self.cardsShown
         """
 
         # If impossible to display new cards, re-initialize the deck
         if len(self.stockpile) == 0:
-            raise ImplementationError
-        
-        # Else, adds up to 3 cards the cardsShown list
-        for _ in range(min(3, len(self.stockpile))):
-            newCard = self.picks_card()
-            self.cardsShown.append(newCard)
+            self.reinitialize_deck()
+        else:
+            # Else, adds up to 3 cards the cardsShown list
+            for _ in range(min(3, len(self.stockpile))):
+                newCard = self.picks_card()
+                self.cardsShown.append(newCard)
 
     def displays_closed_deck(self, screen):
         if len(self.stockpile) != 0:
-            screen.blit(imgClosedCard, self.ClOSED_DECK_POSITION)
+            screen.blit(imgClosedCard, self.CLOSED_DECK_POSITION)
 
     def displays_open_deck(self, screen):
-        if len(self.cardsShown) != 0:
-            imgOpenDeck = img_card(self.cardsShown[-1])
-            screen.blit(imgOpenDeck, self.OPEN_DECK_POSITION)
+        """
+        Displays 3 cards if possible
+        """
+        for i in range(min(3, len(self.cardsShown))):
+            imgOpenDeck = img_card(self.cardsShown[-1-i])
+            positionOfShownCards = (self.OPEN_DECK_POSITION[0] - 20*i, self.OPEN_DECK_POSITION[1])
+            screen.blit(imgOpenDeck, positionOfShownCards)
+
+    def get_position_deck(self):
+        """
+        Returns (x, y, width, height) of the deck
+        """
+        return (self.CLOSED_DECK_POSITION[0], self.CLOSED_DECK_POSITION[1], WIDTH, HEIGHT)
 
 class Table():
     def __init__(self, startingDeck):
@@ -203,16 +216,15 @@ class Table():
         for card in stack:
             self.cardsOnTable[index].append(card)
 
-    def makes_move_in_table(self, move):
-        """
-        Returns True if the move is made. 
-        'move' is a tuple containing (source, destination, card) with : 
+    def can_be_moved_in_table(self, move):
+        """ 
+        Returns True if the move can be made. 
+        move is a tuple (source, destination, card) with : 
             - source : int, index of the table 
             - destination : int, index of the table 
             - card : (Rank, Suit), card
-
-        The move is relative to the table and not the foundation piles
         """
+
         source = move[0]
         destination = move[1]
         card = move[2]
@@ -224,26 +236,70 @@ class Table():
         # Takes the last card of the destination 
         lastCardOfDestination = self.cardsOnTable[destination][-1]
 
-        # If those cards are compatible, makes the move 
-        if self.cards_compatible(lastCardOfDestination, card):
-            
-            to_be_moved = self.stack_of_cards(source, card)
-            self.adds_stack_of_cards(destination, to_be_moved)
+        return self.cards_compatible(lastCardOfDestination, card)
 
-            # Reveals the last card from source index if possible 
-            if len(self.cardsOnTable[source]) > 0:
-                self.cardsOnTable[source][-1][1] = False 
-            return True
+    def can_be_moved_in_piles(self, foundationPiles):
+        """
+        Returns True if the move can be made. 
+        'move' is a couple (source, card)
+        """
+        source = move[0]
+        card = move[1]
+
+        # Checks if the source index contains the card
+        if not(self.contains_card(source, card)):
+            raise ImplementationError
+        
+        rank = card[0]
+        suit = card[1]
+
+        return foundationPiles.cardsOnPiles[suit] == rank.value - 1
+
+
+    def makes_move_in_table(self, move):
+        """
+        Makes a move whether or not it's a valid one. 
+        
+        'move' is a tuple (source, destination, card) with : 
+            - source : int, index of the table 
+            - destination : int, index of the table 
+            - card : (Rank, Suit), card
+
+        The move is relative to the table and not the foundation piles
+        """
+
+        source = move[0]
+        destination = move[1]
+        card = move[2]
+
+        to_be_moved = self.stack_of_cards(source, card)
+        self.adds_stack_of_cards(destination, to_be_moved)
+
+        # Reveals the last card from source index if possible 
+        if len(self.cardsOnTable[source]) > 0:
+            self.cardsOnTable[source][-1][1] = False 
+
+    def get_position_last_card(self, index):
+        """
+        Given a particular index of the table, 
+        returns (x, y, w, h) of table's index's last card
+        """
+        # Represents the index of the last card in the table's index
+        j = len(self.cardsOnTable[index]) - 1
+        
+        if j > -1:
+            positionOfCard = (170*index + self.STARTING_POSITION_TABLE[0], 20*j + self.STARTING_POSITION_TABLE[1])
+            return (positionOfCard[0], positionOfCard[1], WIDTH, HEIGHT)
         else:
-            return False
-
+            positionOfCard = (170*index + self.STARTING_POSITION_TABLE[0], self.STARTING_POSITION_TABLE[1])
+            return (positionOfCard[0], positionOfCard[1], WIDTH, HEIGHT)
 
 class FoundationPiles():
     def __init__(self):
         self.cardsOnPiles = {}
         self.STARTING_POSITION_PILES = (520, 10)
         for i in range(NUM_PILES):
-            self.cardsOnPiles[Suit(i)] = 2
+            self.cardsOnPiles[Suit(i)] = 0
     
     def receives_card(self, s):
         if self.cardsOnPiles[s] == KING:
