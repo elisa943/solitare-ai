@@ -365,8 +365,10 @@ class FoundationPiles():
         """
         Adds a card to the suit's foundation pile. 
         """
-
-        self.cardsOnPiles[suit] += 1
+        if self.cardsOnPiles[suit] < 13:
+            self.cardsOnPiles[suit] += 1
+        else:
+            raise ImplementationError
     
     def places_card(self, theCard, deck, table, index=None):
         """
@@ -390,8 +392,10 @@ class FoundationPiles():
         else:
             print("oh well...")
 
-
     def displays_foundation_piles(self, screen):
+        """
+        Displays the foundation piles
+        """
         i = 0
         for pile in self.cardsOnPiles:
             if self.cardsOnPiles[pile] >= 1:
