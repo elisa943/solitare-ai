@@ -142,6 +142,8 @@ class Table():
     def __init__(self, startingDeck):
         self.cardsOnTable = [[] for _ in range(NUM_TABLE)]
         self.STARTING_POSITION_TABLE = (10, 220)
+        self.GAP_CARDS_X = 170
+        self.GAP_CARDS_Y = 20
 
         # Each part of the table is a Queue containing tuples (card, hidden) with hidden being a boolean
         for i in range(NUM_TABLE):
@@ -317,6 +319,29 @@ class Table():
         else:
             self.cardsOnTable[index].remove(card)
 
+    def card_in_position(self, position):
+        """
+        Given a position (x, y) of the mouse, 
+        returns the index (i, j) representing the card 
+        that the mouse clicked on. 
+
+        If the mouse clicked on nothing, or a card that is hidden returns None
+
+        Ecart entre cartes en abscisse : 170
+        En ordonnée : 20
+        """
+
+        i = int((position[0] - self.STARTING_POSITION_TABLE[0]) / self.GAP_CARDS_X)
+        j = int((position[1] - self.STARTING_POSITION_TABLE[1]) / self.GAP_CARDS_Y)
+
+        if j < len(self.cardsOnTable[i]):
+            return (i, j)
+
+        return None
+        
+
+
+
 class FoundationPiles():
     def __init__(self):
         self.STARTING_POSITION_PILES = (520, 10)
@@ -359,7 +384,6 @@ class FoundationPiles():
         
         # If card can be added on pile foundation, then it's added and returns True
         return self.cardsOnPiles[suit] == rank.value - 1 and not(hidden)
-
 
     def adds_to_piles(self, suit):
         """

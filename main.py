@@ -4,6 +4,9 @@ import time
 from pygame import mixer
 from generate import * 
 
+WINDOW_WIDTH = 1200
+WINDOW_HEIGHT = 1000
+
 class Player():
     def __init__(self, deck, table, foundationPiles):
         self.deck = deck
@@ -59,9 +62,9 @@ class Player():
         # * Checks if the mouse clicked on a card on the table 
         for i in range(len(table.cardsOnTable)):
             
-            # ! For now : only checks if the last card was clicked on 
+            # Checks if the last card was clicked on 
 
-            # Takes the position of the last card, including its size : (x, y, w, h)
+            # Takes the position of the last card including its size : (x, y, w, h)
             positionLastCard = table.get_position_last_card(i)
 
             # Check if the table's index is empty
@@ -70,7 +73,7 @@ class Player():
             # If the mouse clicked on the last card of a pile and the pile isn't empty, checks if the card can be moved
             if self.is_mouse_in_rectangle(positionLastCard, mouse_position) and not(empty):
                 
-                # Checks is the card can be moved in its foundation pile 
+                # * Checks is the card can be moved in its foundation pile 
 
                 # lastCard represents the last of the i-th pile
                 lastCard = table.cardsOnTable[i][-1]
@@ -90,11 +93,23 @@ class Player():
                         table.cardsOnTable[i].pop(-1)
                         table.cardsOnTable[i].append(newLastCard)
 
+                    return True
 
-                # ! Checks if it can be moved to another pile in the table
-                
-                break
-        
+                return False
+
+        # Checks if the card clicked on the table 
+        if self.is_mouse_in_rectangle((table.STARTING_POSITION_TABLE[0], table.STARTING_POSITION_TABLE[1], WINDOW_WIDTH, WINDOW_HEIGHT), mouse_position):
+
+            # Detects which card was clicked on 
+            print("in : ", table.card_in_position(mouse_position))
+        else:
+            print("out !")
+
+
+        # Checks if it can be moved to another pile in the table
+        #for j in range(len(table.cardsOnTable)):
+
+
         
         return False
 
@@ -102,7 +117,7 @@ class Player():
         # Initialization
         pygame.init()
         pygame.font.init()
-        screen = pygame.display.set_mode((1200, 1000))
+        screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         
         # Title and Icon
         pygame.display.set_caption("Solitaire AI")
@@ -154,8 +169,6 @@ def main():
     screen = thePlayer.initialize_pygame()
     running = True
 
-    
-
     while running:
         thePlayer.draws_window(screen, theDeck, theTable, theFoundationPiles)
 
@@ -170,8 +183,6 @@ def main():
         if theFoundationPiles.game_won():
             running = False 
 
-
-    
     thePlayer.close_pygame()
 
 
