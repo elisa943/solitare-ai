@@ -135,7 +135,7 @@ class Deck():
         """
         # If some cards are shown
         if len(self.cardsShown) > 0:
-            self.cardsShown.pop(-1)
+            self.cardsShown.pop(max(-3, -len(self.cardsShown)))
 
 
 class Table():

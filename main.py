@@ -45,10 +45,12 @@ class Player():
 
         # * Checks if the mouse clicked on the open deck 
         openDeckPostion = deck.get_position_deck(True)
-
+        
         # If the mouse clicked on the open deck, places the card
         if self.is_mouse_in_rectangle(openDeckPostion, mouse_position):
-            cardShown = None if len(deck.cardsShown) == 0 else (deck.cardsShown[-1], False)
+
+            cardShown = None if len(deck.cardsShown) == 0 else (deck.cardsShown[-3], False)
+
             if cardShown != None:
                 foundationPiles.places_card(cardShown, deck, table)
             else:
@@ -152,11 +154,10 @@ def main():
     screen = thePlayer.initialize_pygame()
     running = True
 
-    thePlayer.draws_window(screen, theDeck, theTable, theFoundationPiles)
-
-    theDeck.displays_open_deck(screen)
+    
 
     while running:
+        thePlayer.draws_window(screen, theDeck, theTable, theFoundationPiles)
 
         # Quit 
         for event in pygame.event.get():
@@ -169,7 +170,7 @@ def main():
         if theFoundationPiles.game_won():
             running = False 
 
-        thePlayer.draws_window(screen, theDeck, theTable, theFoundationPiles)
+
     
     thePlayer.close_pygame()
 
