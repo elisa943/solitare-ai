@@ -143,7 +143,7 @@ class Table():
         self.cardsOnTable = [[] for _ in range(NUM_TABLE)]
         self.STARTING_POSITION_TABLE = (10, 220)
         self.GAP_CARDS_X = 170
-        self.GAP_CARDS_Y = 20
+        self.GAP_CARDS_Y = 30
 
         # Each part of the table is a Queue containing tuples (card, hidden) with hidden being a boolean
         for i in range(NUM_TABLE):
@@ -166,7 +166,7 @@ class Table():
         for i in range(len(self.cardsOnTable)):
             for j in range(len(self.cardsOnTable[i])):
                 (card, hidden) = self.cardsOnTable[i][j]
-                positionOfCard = (170*i + self.STARTING_POSITION_TABLE[0], 20*j + self.STARTING_POSITION_TABLE[1])
+                positionOfCard = (self.GAP_CARDS_X*i + self.STARTING_POSITION_TABLE[0], self.GAP_CARDS_Y*j + self.STARTING_POSITION_TABLE[1])
                 
                 # If the card is not hiddenn then it is shown on screen
                 if not hidden:
@@ -180,49 +180,37 @@ class Table():
         Returns True if we can put cardDown under cardUp
         """
         # Checks if cardUp's rank is equal to cardDown's rank + 1 
-        if cardUp[0] != cardDown[0] + 1:
+        if cardUp[0].value != cardDown[0].value + 1:
             return False 
         
         # Checks if cardUp's suit is the same color as cardDown's
-        if cardUp[1] % 2 != cardDown[1] % 2:
+        if cardUp[1].value % 2 == cardDown[1].value % 2:
             return False
 
         return True
 
     def contains_card(self, index, card):
         """
-        Checks if the index contains the card (not hidden)
+        Checks if the index contains the card (not hidden) and returns its second index j.
         """
-        for c in self.cardsOnTable[index]:
-            if not(c[1]) and c[0] == card:
-                return True 
-        return False 
+        for j in range(len(self.cardsOnTable)):
+            if not(self.cardsOnTable[index][j][1]) and self.cardsOnTable[index][j][0] == card:
+                return j 
+        
+        return None 
 
     def stack_of_cards(self, index, card):
         """
-        Returns a sublist of self.cardsOnTable[index] with card being the first element 
-        and deletes it from the deck. 
+        Returns a sublist of self.cardsOnTable[index] with card being the first element. 
         """
-        if not(self.contains_card(index, card)):
+        # If the table's index doesn't contain the card, raises an error
+        j = self.contains_card(index, card)
+        if j == None:
             raise ImplementationError
         
         num_cards = len(self.cardsOnTable[index])
-        i = 0
-        indexOfCard = None
 
-        while i < num_cards and indexOfCard == None:
-            
-            # If the card is found and it's not hidden, takes its index
-            if self.cardsOnTable[index][i][0] == card and not(self.cardsOnTable[index][i][0][1]) :
-                indexOfCard = i
-            
-            i += 1
-        
-        res = self.cardsOnTable[index][indexOfCard:num_cards]
-
-        # Deletes those cards
-        for _ in range(indexOfCard, num_cards):
-            self.cardsOnTable[index].pop(-1)
+        res = self.cardsOnTable[index][j:num_cards]
 
         return res
 
@@ -232,6 +220,15 @@ class Table():
         """
         for card in stack:
             self.cardsOnTable[index].append(card)
+
+    def deletes_stack_of_card(self, index, stack):
+        """
+        Given a list 'stack' of cards, deletes each of them in self.cardsOnTable[index]. 
+        """
+
+        for i in range(len(stack)):
+            card = stack[i]
+            self.cardsOnTable[index].remove(card)
 
     def can_be_moved_in_table(self, move):
         """ 
@@ -247,13 +244,13 @@ class Table():
         card = move[2]
 
         # Checks if the source index contains the card
-        if not(self.contains_card(source, card)):
+        if self.contains_card(source, card) == None:
             raise ImplementationError
 
         # Takes the last card of the destination 
         lastCardOfDestination = self.cardsOnTable[destination][-1]
 
-        return self.cards_compatible(lastCardOfDestination, card)
+        return self.cards_compatible(lastCardOfDestination[0], card)
 
     def can_be_moved_in_piles(self, foundationPiles):
         """
@@ -264,7 +261,7 @@ class Table():
         card = move[1]
 
         # Checks if the source index contains the card
-        if not(self.contains_card(source, card)):
+        if self.contains_card(source, card) == None:
             raise ImplementationError
         
         rank = card[0]
@@ -289,11 +286,15 @@ class Table():
         card = move[2]
 
         to_be_moved = self.stack_of_cards(source, card)
+        # Adds the stack of cards to the destination 
         self.adds_stack_of_cards(destination, to_be_moved)
+
+        # Deletes the stack of cards of the source 
+        self.deletes_stack_of_card(source, to_be_moved)
 
         # Reveals the last card from source index if possible 
         if len(self.cardsOnTable[source]) > 0:
-            self.cardsOnTable[source][-1][1] = False 
+            self.cardsOnTable[source][-1] = (self.cardsOnTable[source][-1][0], False)
 
     def get_position_last_card(self, index):
         """
@@ -305,16 +306,16 @@ class Table():
         
         # If the table's index is not empty, returns the position of its last card
         if j > -1:
-            positionOfCard = (170*index + self.STARTING_POSITION_TABLE[0], 20*j + self.STARTING_POSITION_TABLE[1])
+            positionOfCard = (self.GAP_CARDS_X*index + self.STARTING_POSITION_TABLE[0], self.GAP_CARDS_Y*j + self.STARTING_POSITION_TABLE[1])
             return (positionOfCard[0], positionOfCard[1], WIDTH, HEIGHT)
+        
         # Else, the table is empty
         else:
-            positionOfCard = (170*index + self.STARTING_POSITION_TABLE[0], self.STARTING_POSITION_TABLE[1])
+            positionOfCard = (self.GAP_CARDS_X*index + self.STARTING_POSITION_TABLE[0], self.STARTING_POSITION_TABLE[1])
             return (positionOfCard[0], positionOfCard[1], WIDTH, HEIGHT)
     
     def deletes_card(self, card, index):
-        if not(self.contains_card(index, card[0])):
-            print(card, index, self.cardsOnTable[index])
+        if self.contains_card(index, card[0]) == None:
             raise ImplementationError
         else:
             self.cardsOnTable[index].remove(card)
@@ -338,8 +339,22 @@ class Table():
             return (i, j)
 
         return None
-        
 
+    def compatible_index(self, i, j):
+        """
+        Returns a list of all possible new positions of the card of index (i, j)
+        """
+        # List of all possible index it can be moved to
+        compatibleIndexes = []
+        
+        # Checks if it can be moved to another pile in the table
+        for index in range(len(self.cardsOnTable)):
+            if i != index:
+                card = self.cardsOnTable[i][j]
+                if self.can_be_moved_in_table((i, index, card[0])):
+                    compatibleIndexes.append(index)
+        
+        return compatibleIndexes
 
 
 class FoundationPiles():
