@@ -61,100 +61,43 @@ class Player():
 
             # 2.1 - Checks if the mouse clicked on the last card of a pile 
             index = self.last_card_clicked_on(mouse_position, foundationPiles, table)
-
             if index != None:
-
-                # 2.1.1 - Checks if it can be moved to its foundation pile
-
-                # lastCard represents the last of the index-th pile
-                lastCard = table.cardsOnTable[index][-1]
-
-                # If the card can be added to its foundation pile
-                if foundationPiles.can_be_moved_in_foundation(lastCard):
-
-                    # The card is added to its foundation pile
-                    foundationPiles.adds_to_piles(lastCard[0][1])
-
-                    # And is deleted from its previous pile
-                    table.deletes_card(lastCard, index)
-
-                    # Reveals the last card if possible 
-                    if len(table.cardsOnTable[index]) > 0:
-                        newLastCard = (table.cardsOnTable[index][-1][0], False)
-                        table.cardsOnTable[index].pop(-1)
-                        table.cardsOnTable[index].append(newLastCard)
-                    
-                    return True 
-
-                # 2.1.2 - Checks if it can be moved to another pile 
-
-                # List of all possible index it can be moved to
-                compatibleIndexes = table.compatible_index(index, -1)
-
-                # If there are no compatibles indexes, does nothing : the card can't be moved
-                if len(compatibleIndexes) == 0:
-                    return False 
-                
-                # Else, there is at least one possibility : takes the first possibility and makes the move
-                else:
-                    card = table.cardsOnTable[index][-1] # card + hidden
-                    table.makes_move_in_table((index, compatibleIndexes[0], card[0]))
-
-            # 2.2 - If it's not the last card, detects which card was clicked on and takes its index in the table
-            cardChosen = table.card_in_position(mouse_position)
-
-            # If the player didn't click on a card then do nothing 
-            if cardChosen == None:
-                return False 
+                return foundationPiles.moved_to_foundation(index, table, deck)
             
-            # If the card chosen is hidden then do nothing
-            elif table.cardsOnTable[cardChosen[0]][cardChosen[1]][1]:
-                return False 
-            
-            # Else, the player clicked on a card shown (we know it's not a last card)
-            else:
-
-                # List of all possible index it can be moved to
-                compatibleIndexes = table.compatible_index(cardChosen[0], cardChosen[1])
-                
-                # If there are no compatibles indexes, does nothing : the card can't be moved
-                if len(compatibleIndexes) == 0:
-                    return False 
-                
-                # Else, there is at least one possibility 
-                else:
-                    card = table.cardsOnTable[cardChosen[0]][cardChosen[1]]
-                    table.makes_move_in_table((cardChosen[0], compatibleIndexes[0], card[0]))
+            # 2.2 - Checks if the mouse clicked on an upper card. Detects which card was clicked on and takes its index in the table
+            return table.upper_card(mouse_position, deck)
 
         # 3 - Else, the mouse clicked on the top of the window 
         else:
 
-            #  * Checks if the mouse pressed on the deck 
+            #  3.1 - Checks if the mouse pressed on the deck 
             deckPosition = deck.get_position_deck()
             
-            # If the mouse clicked on the (closed) deck, draws up to 3 cards or re-initialized the deck
+            # 3.1.1 - If the mouse clicked on the (closed) deck, draws up to 3 cards or re-initialized the deck
             if self.is_mouse_in_rectangle(deckPosition, mouse_position):
                 deck.picks_3_cards()
                 return True 
 
-            # * Checks if the mouse clicked on the open deck 
+            # 3.1.2 - Checks if the mouse clicked on the open deck 
             openDeckPostion = deck.get_position_deck(True)
             
             # If the mouse clicked on the open deck, places the card if possible
             if self.is_mouse_in_rectangle(openDeckPostion, mouse_position):
 
-                cardShown = None if len(deck.cardsShown) == 0 else (deck.cardsShown[-3], False)
+                cardShown = None if len(deck.cardsShown) == 0 else (deck.cardsShown[max(-3, -len(deck.cardsShown))] , False)
 
-                # If the deck is not empty, places the card IF possible
+                # If the deck is not empty, places the card on the foundation piles IF possible
                 if cardShown != None:
-                    foundationPiles.places_card(cardShown, deck, table)
-                    return True
+                    if foundationPiles.places_card(cardShown, deck, table):
+                        return True
+                    else:
+                        return table.move_to_pile(-1, deck, fromDeck=True)
                 
                 # Else, does nothing 
                 else:
                     return False
 
-            # * Checks if the mosue clicked on the foundation piles
+            # * Checks if the mouse clicked on the foundation piles
 
 
 

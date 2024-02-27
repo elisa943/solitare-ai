@@ -138,6 +138,7 @@ class Deck():
             self.cardsShown.pop(max(-3, -len(self.cardsShown)))
 
 
+
 class Table():
     def __init__(self, startingDeck):
         self.cardsOnTable = [[] for _ in range(NUM_TABLE)]
@@ -230,7 +231,7 @@ class Table():
             card = stack[i]
             self.cardsOnTable[index].remove(card)
 
-    def can_be_moved_in_table(self, move):
+    def can_be_moved_in_table(self, move, deck, fromDeck=False):
         """ 
         Returns True if the move can be made. 
         move is a tuple (source, destination, card) with : 
@@ -241,12 +242,22 @@ class Table():
 
         source = move[0]
         destination = move[1]
-        card = move[2]
+        card = move[2] 
 
-        # Checks if the source index contains the card
-        if self.contains_card(source, card) == None:
-            raise ImplementationError
+        # If the card isn't from the deck :
+        if not(fromDeck):
 
+            # Checks if the source index contains the card
+            if self.contains_card(source, card) == None:
+                raise ImplementationError
+
+        # Else, the card is from the deck. 
+        else:
+            card = deck.cardsShown[max(-3, -len(deck.cardsShown))]
+
+        if len(self.cardsOnTable[destination]) == 0:
+            return False
+        
         # Takes the last card of the destination 
         lastCardOfDestination = self.cardsOnTable[destination][-1]
 
@@ -269,7 +280,7 @@ class Table():
 
         return foundationPiles.cardsOnPiles[suit] == rank.value - 1
 
-    def makes_move_in_table(self, move):
+    def makes_move_in_table(self, move, deck, fromDeck=False):
         """
         Makes a move whether or not it's a valid one. 
         
@@ -285,16 +296,27 @@ class Table():
         destination = move[1]
         card = move[2]
 
-        to_be_moved = self.stack_of_cards(source, card)
-        # Adds the stack of cards to the destination 
-        self.adds_stack_of_cards(destination, to_be_moved)
+        if not(fromDeck):
+            to_be_moved = self.stack_of_cards(source, card)
 
-        # Deletes the stack of cards of the source 
-        self.deletes_stack_of_card(source, to_be_moved)
+            # Adds the stack of cards to the destination 
+            self.adds_stack_of_cards(destination, to_be_moved)
 
-        # Reveals the last card from source index if possible 
-        if len(self.cardsOnTable[source]) > 0:
-            self.cardsOnTable[source][-1] = (self.cardsOnTable[source][-1][0], False)
+            # Deletes the stack of cards of the source 
+            self.deletes_stack_of_card(source, to_be_moved)
+
+            # Reveals the last card from source index if possible 
+            if len(self.cardsOnTable[source]) > 0:
+                self.cardsOnTable[source][-1] = (self.cardsOnTable[source][-1][0], False)
+        
+        else:
+            to_be_moved = [(deck.cardsShown[max(-3, -len(deck.cardsShown))], False)]
+
+            # Adds the stack of cards to the destination 
+            self.adds_stack_of_cards(destination, to_be_moved)
+
+            # Deletes the stack of cards of the deck
+            deck.deletes_shown_card()
 
     def get_position_last_card(self, index):
         """
@@ -340,21 +362,136 @@ class Table():
 
         return None
 
-    def compatible_index(self, i, j):
+    def compatible_index(self, position, deck, fromDeck=None):
         """
         Returns a list of all possible new positions of the card of index (i, j)
         """
+
         # List of all possible index it can be moved to
         compatibleIndexes = []
         
-        # Checks if it can be moved to another pile in the table
-        for index in range(len(self.cardsOnTable)):
-            if i != index:
-                card = self.cardsOnTable[i][j]
-                if self.can_be_moved_in_table((i, index, card[0])):
-                    compatibleIndexes.append(index)
+        # If the card is not from the deck
+        if fromDeck == None:
+            
+            (i, j) = position
+
+            # Checks if it can be moved to another pile in the table
+            for index in range(len(self.cardsOnTable)):
+                if i != index:
+                    card = self.cardsOnTable[i][j]
+                    
+                    if self.can_be_moved_in_table((i, index, card[0]), deck):
+                        compatibleIndexes.append(index)
         
+        else:
+            for index in range(len(self.cardsOnTable)):
+                card = deck.cardsShown[max(-3, -len(deck.cardsShown))]
+                if self.can_be_moved_in_table((-1, index, card), deck, fromDeck=True):
+                    compatibleIndexes.append(index)
+
         return compatibleIndexes
+    
+    def move_to_pile(self, index, deck, fromDeck=False):
+        """
+        Checks it can be moved to another pile. If so, makes the move and returns True if a move was made. 
+        """
+
+        # If the card to be moved is from the pile 
+        if not(fromDeck):
+
+            # List of all possible index it can be moved to
+            compatibleIndexes = self.compatible_index((index, -1), deck)
+
+            # If there are no compatibles indexes, does nothing : the card can't be moved
+            if len(compatibleIndexes) == 0:
+                return False 
+
+            # Else, there is at least one possibility : takes the first possibility and makes the move
+            else:
+                card = self.cardsOnTable[index][-1] # card + hidden
+                self.makes_move_in_table((index, compatibleIndexes[0], card[0]), deck)
+                return True 
+        
+        # Else, the card is from the (open) deck
+        else:
+            compatibleIndexes = self.compatible_index((index, -1), deck, fromDeck=True)
+
+            # If there are no compatibles indexes, does nothing : the card can't be moved
+            if len(compatibleIndexes) == 0:
+                return False 
+
+            # Else, there is at least one possibility : takes the first possibility and makes the move
+            else:
+                card = deck.cardsShown[max(-3, -len(deck.cardsShown))] 
+                self.makes_move_in_table((index, compatibleIndexes[0], card), deck, fromDeck=True)
+                return True 
+
+    def king_on_table(self, index, deck, fromDeck=False):
+        """
+        Checks if a KING can be moved to a pile of the table. 
+        """
+        # If the card is from another pile
+        if not(fromDeck):
+
+            if len(self.cardsOnTable[index]) != 0:
+
+                # If the last card is a KING
+                if self.cardsOnTable[index][-1][0] == KING:
+                    # And if there is an empty pile
+                    for i in range(len(self.cardsOnTable)):
+                        if len(self.cardsOnTable[i]) == 0:
+
+                            # The KING card can be moved there
+                            return i 
+                return None 
+
+            return None 
+
+        # Else, the card is from the deck
+        else:
+            # If the card at the top of the open deck is a king, checks if it can be moved to the table. 
+            if deck.cardsShown[max(-3, -len(deck.cardsShown))][0] == KING:
+
+                # Checks if a pile is empty
+                for i in range(len(self.cardsOnTable)):
+                    if len(self.cardsOnTable[i]) == 0:
+                        return i 
+
+                return None 
+
+            return None 
+
+    def upper_card(self, mouse_position, deck):
+        """
+        Return True if a move was made. 
+        """
+
+        # Detects which card was clicked on and takes its index in the table
+        cardChosen = self.card_in_position(mouse_position)
+
+        # If the player didn't click on a card then do nothing 
+        if cardChosen == None:
+            return False 
+        
+        # If the card chosen is hidden then do nothing
+        elif self.cardsOnTable[cardChosen[0]][cardChosen[1]][1]:
+            return False 
+        
+        # Else, the player clicked on a card shown (we know it's not a last card)
+        else:
+
+            # List of all possible index it can be moved to
+            compatibleIndexes = self.compatible_index((cardChosen[0], cardChosen[1]), deck)
+            
+            # If there are no compatibles indexes, does nothing : the card can't be moved
+            if len(compatibleIndexes) == 0:
+                return False 
+            
+            # Else, there is at least one possibility 
+            else:
+                card = self.cardsOnTable[cardChosen[0]][cardChosen[1]]
+                self.makes_move_in_table((cardChosen[0], compatibleIndexes[0], card[0]), deck)
+                return True
 
 
 class FoundationPiles():
@@ -414,6 +551,8 @@ class FoundationPiles():
         Given a card, places the card in its foundation pile IF possible
         - If index is None, then the card is from the deck
         - Else, index represents the index of the card in the table
+
+        return True if it placed the card
         """
         # If the card is from the deck 
         if index == None:
@@ -426,6 +565,8 @@ class FoundationPiles():
 
                 # And is deleted from its previous pile 
                 deck.deletes_shown_card()
+
+                return True
         
         # Else, the card is from the table
         else:
@@ -442,4 +583,33 @@ class FoundationPiles():
                 positionOfPiles = (170*i + self.STARTING_POSITION_PILES[0], self.STARTING_POSITION_PILES[1])
                 screen.blit(img_card(card), positionOfPiles)
             i += 1
+
+    def moved_to_foundation(self, index, table, deck):
+        """
+        Returns True if the last card clicked on can be moved to its foundation pile, and makes the move. 
+        Returns False otherwise. 
+        """
+
+        # lastCard represents the last of the index-th pile
+        lastCard = table.cardsOnTable[index][-1]
+
+        # If the card can be added to its foundation pile
+        if self.can_be_moved_in_foundation(lastCard):
+
+            # The card is added to its foundation pile
+            self.adds_to_piles(lastCard[0][1])
+
+            # And is deleted from its previous pile
+            table.deletes_card(lastCard, index)
+
+            # Reveals the last card if possible 
+            if len(table.cardsOnTable[index]) > 0:
+                newLastCard = (table.cardsOnTable[index][-1][0], False)
+                table.cardsOnTable[index].pop(-1)
+                table.cardsOnTable[index].append(newLastCard)
+            
+            return True 
+
+        # 2.1.2 - Checks if it can be moved to another pile 
+        return table.move_to_pile(index, deck)
 
