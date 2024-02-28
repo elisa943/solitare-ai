@@ -1,11 +1,7 @@
-# https://opengameart.org/content/boardgame-pack
 import sys
 import time 
 from pygame import mixer
 from generate import * 
-
-WINDOW_WIDTH = 1200
-WINDOW_HEIGHT = 1000
 
 class Player():
     def __init__(self, deck, table, foundationPiles):
