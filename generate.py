@@ -138,7 +138,6 @@ class Deck():
             self.cardsShown.pop(max(-3, -len(self.cardsShown)))
 
 
-
 class Table():
     def __init__(self, startingDeck):
         self.cardsOnTable = [[] for _ in range(NUM_TABLE)]
@@ -155,13 +154,6 @@ class Table():
 
             # Adds the first card shown
             self.cardsOnTable[i].append((startingDeck.picks_card(), False))
-
-    def table_content(self):
-        for i in range(NUM_TABLE):
-            for j in range(len(self.cardsOnTable[i])):
-                print(self.cardsOnTable[i][j], end="")
-            
-            print("\n")
 
     def displays_table(self, screen):
         for i in range(len(self.cardsOnTable)):
@@ -194,7 +186,7 @@ class Table():
         """
         Checks if the index contains the card (not hidden) and returns its second index j.
         """
-        for j in range(len(self.cardsOnTable)):
+        for j in range(len(self.cardsOnTable[index])):
             if not(self.cardsOnTable[index][j][1]) and self.cardsOnTable[index][j][0] == card:
                 return j 
         
@@ -243,7 +235,7 @@ class Table():
         source = move[0]
         destination = move[1]
         card = move[2] 
-
+        
         # If the card isn't from the deck :
         if not(fromDeck):
 
@@ -255,30 +247,20 @@ class Table():
         else:
             card = deck.cardsShown[max(-3, -len(deck.cardsShown))]
 
-        if len(self.cardsOnTable[destination]) == 0:
+        # If the destination pile is empty and the card to be placed is a KING, then the card can be moved
+        if len(self.cardsOnTable[destination]) == 0 and card[0] == Rank(13):
+            return True 
+        
+        # If the destination pile is empty and the card isn't a KING, the card can't be moved
+        elif len(self.cardsOnTable[destination]) == 0:
             return False
         
-        # Takes the last card of the destination 
-        lastCardOfDestination = self.cardsOnTable[destination][-1]
+        # Else, the destination pile isn't empty
+        else:
+            # Takes the last card of the destination 
+            lastCardOfDestination = self.cardsOnTable[destination][-1]
 
-        return self.cards_compatible(lastCardOfDestination[0], card)
-
-    def can_be_moved_in_piles(self, foundationPiles):
-        """
-        Returns True if the move can be made. 
-        'move' is a couple (source, card)
-        """
-        source = move[0]
-        card = move[1]
-
-        # Checks if the source index contains the card
-        if self.contains_card(source, card) == None:
-            raise ImplementationError
-        
-        rank = card[0]
-        suit = card[1]
-
-        return foundationPiles.cardsOnPiles[suit] == rank.value - 1
+            return self.cards_compatible(lastCardOfDestination[0], card)
 
     def makes_move_in_table(self, move, deck, fromDeck=False):
         """
@@ -426,41 +408,6 @@ class Table():
                 self.makes_move_in_table((index, compatibleIndexes[0], card), deck, fromDeck=True)
                 return True 
 
-    def king_on_table(self, index, deck, fromDeck=False):
-        """
-        Checks if a KING can be moved to a pile of the table. 
-        """
-        # If the card is from another pile
-        if not(fromDeck):
-
-            if len(self.cardsOnTable[index]) != 0:
-
-                # If the last card is a KING
-                if self.cardsOnTable[index][-1][0] == KING:
-                    # And if there is an empty pile
-                    for i in range(len(self.cardsOnTable)):
-                        if len(self.cardsOnTable[i]) == 0:
-
-                            # The KING card can be moved there
-                            return i 
-                return None 
-
-            return None 
-
-        # Else, the card is from the deck
-        else:
-            # If the card at the top of the open deck is a king, checks if it can be moved to the table. 
-            if deck.cardsShown[max(-3, -len(deck.cardsShown))][0] == KING:
-
-                # Checks if a pile is empty
-                for i in range(len(self.cardsOnTable)):
-                    if len(self.cardsOnTable[i]) == 0:
-                        return i 
-
-                return None 
-
-            return None 
-
     def upper_card(self, mouse_position, deck):
         """
         Return True if a move was made. 
@@ -501,18 +448,6 @@ class FoundationPiles():
         self.cardsOnPiles = {}
         for i in range(NUM_PILES):
             self.cardsOnPiles[Suit(i)] = 0
-    
-    def receives_card(self, s):
-        if self.cardsOnPiles[s] == KING:
-            raise ImplementationError
-        else:
-            self.cardsOnPiles[s] += 1
-    
-    def gives_card(self, s):
-        if self.cardsOnPiles[s] == -1:
-            raise ImplementationError
-        else:
-            self.cardsOnPiles[s] -= 1
 
     def game_won(self) -> bool:
         """
