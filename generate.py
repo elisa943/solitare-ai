@@ -7,7 +7,7 @@ NUM_TABLE = 7
 NUM_PILES = 4
 NUM_RANKS = 14
 NUM_SUITS = 4
-NUM_CARDS_SHOWN = -1
+NUM_CARDS_SHOWN = -3
 
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 1000
@@ -55,6 +55,10 @@ def suit_string_conversion(suit):
             return "Hearts"
 
 def img_card(card):
+    """
+    Given a card, returns its image.
+    """
+    assert(card != None)
     (rank, suit) = card
     suit_string = suit_string_conversion(suit)
     rank_string = str(rank.value)
@@ -65,7 +69,8 @@ class Deck():
         self.stockpile = []
         self.cardsShown = []
         self.CLOSED_DECK_POSITION = (10, 10)
-        self.OPEN_DECK_POSITION = (200, 10)
+        self.OPEN_DECK_POSITION = (230, 10)
+        self.GAP_CARDS_X = 30
 
         # Adds all possible cards
         for i in range(1, 14):
@@ -75,8 +80,11 @@ class Deck():
         # Deck is shuffled at the very beginning
         random.shuffle(self.stockpile)
 
-    # Picks one card at the top of the deck
     def picks_card(self, withdraw=True):
+        """
+        Picks one card at the top of the deck
+        """
+
         cardPicked = None
 
         if len(self.stockpile) > 0:
@@ -89,6 +97,9 @@ class Deck():
         return cardPicked
 
     def reinitialize_deck(self):
+        """
+        If the stockpile is empty, puts it back on the deck.
+        """
         # If the deck is empty, re-initialize it
         if len(self.stockpile) == 0:
             self.cardsShown.reverse()
@@ -118,6 +129,9 @@ class Deck():
                 self.cardsShown.append(newCard)
 
     def displays_closed_deck(self, screen):
+        """
+        Displays the closed deck
+        """
         if len(self.stockpile) != 0:
             screen.blit(imgClosedCard, self.CLOSED_DECK_POSITION)
 
@@ -127,7 +141,7 @@ class Deck():
         """
         for i in range(min(-NUM_CARDS_SHOWN, len(self.cardsShown))):
             imgOpenDeck = img_card(self.cardsShown[-1-i])
-            positionOfShownCards = (self.OPEN_DECK_POSITION[0] - 20*i, self.OPEN_DECK_POSITION[1])
+            positionOfShownCards = (self.OPEN_DECK_POSITION[0] - self.GAP_CARDS_X*i, self.OPEN_DECK_POSITION[1])
             screen.blit(imgOpenDeck, positionOfShownCards)
 
     def get_position_deck(self, open=False):
@@ -165,6 +179,7 @@ class Table():
             # Adds the first card shown
             self.cardsOnTable[i].append((startingDeck.picks_card(), False))
 
+    """ ---------- Displaying ----------"""
     def displays_table(self, screen):
         for i in range(len(self.cardsOnTable)):
             for j in range(len(self.cardsOnTable[i])):
@@ -244,7 +259,7 @@ class Table():
             card = stack[i]
             self.cardsOnTable[index].remove(card)
 
-    def can_be_moved_in_table(self, move, deck, fromDeck=False):
+    def can_be_moved_in_table(self, move, deck, fromDeck=False, fromFoundation=False) -> bool:
         """
         Returns True if the move can be made.
         move is a tuple (source, destination, card) with :
@@ -255,18 +270,23 @@ class Table():
 
         source = move[0]
         destination = move[1]
-        card = move[2]
+        card = None
 
-        # If the card isn't from the deck :
-        if not(fromDeck):
+        # If the card is from the foundation piles
+        if fromFoundation:
+            card = move[2]
 
-            # Checks if the source index contains the card
-            if self.contains_card(source, card) == None:
-                raise ImplementationError
+        # If the card is from the deck :
+        elif fromDeck:
+            card = deck.cardsShown[max(NUM_CARDS_SHOWN, -len(deck.cardsShown))]
 
         # Else, the card is from the deck.
         else:
-            card = deck.cardsShown[max(NUM_CARDS_SHOWN, -len(deck.cardsShown))]
+            # Checks if the source index contains the card
+            card = move[2]
+            if self.contains_card(source, card) == None:
+                raise ImplementationError
+
 
         # If the destination pile is empty and the card to be placed is a KING, then the card can be moved
         if len(self.cardsOnTable[destination]) == 0 and card[0] == Rank(13):
@@ -283,7 +303,7 @@ class Table():
 
             return self.cards_compatible(lastCardOfDestination[0], card)
 
-    def makes_move_in_table(self, move, deck, fromDeck=False):
+    def makes_move_in_table(self, move, deck, fromDeck=False, fromFoundation=False):
         """
         Makes a move whether or not it's a valid one.
 
@@ -299,7 +319,25 @@ class Table():
         destination = move[1]
         card = move[2]
 
-        if not(fromDeck):
+        if fromFoundation:
+            to_be_moved = [(card, False)]
+
+            # Adds the stack of cards to the destination
+            self.adds_stack_of_cards(destination, to_be_moved)
+
+            # Does't delete the card here
+
+        elif fromDeck:
+            to_be_moved = [(deck.cardsShown[max(NUM_CARDS_SHOWN, -len(deck.cardsShown))], False)]
+
+            # Adds the stack of cards to the destination
+            self.adds_stack_of_cards(destination, to_be_moved)
+
+            # Deletes the stack of cards of the deck
+            deck.deletes_shown_card()
+
+        else:
+
             to_be_moved = self.stack_of_cards(source, card)
 
             # Adds the stack of cards to the destination
@@ -311,15 +349,6 @@ class Table():
             # Reveals the last card from source index if possible
             if len(self.cardsOnTable[source]) > 0:
                 self.cardsOnTable[source][-1] = (self.cardsOnTable[source][-1][0], False)
-
-        else:
-            to_be_moved = [(deck.cardsShown[max(NUM_CARDS_SHOWN, -len(deck.cardsShown))], False)]
-
-            # Adds the stack of cards to the destination
-            self.adds_stack_of_cards(destination, to_be_moved)
-
-            # Deletes the stack of cards of the deck
-            deck.deletes_shown_card()
 
     def get_position_last_card(self, index):
         """
@@ -340,6 +369,9 @@ class Table():
             return (positionOfCard[0], positionOfCard[1], WIDTH, HEIGHT)
 
     def deletes_card(self, card, index):
+        """
+        Deletes 'card' from the table's index
+        """
         if self.contains_card(index, card[0]) == None:
             raise ImplementationError
         else:
@@ -429,7 +461,7 @@ class Table():
                 self.makes_move_in_table((index, compatibleIndexes[0], card), deck, fromDeck=True)
                 return True
 
-    def upper_card(self, mouse_position, deck):
+    def upper_card(self, mouse_position, deck) -> bool:
         """
         Return True if a move was made.
         """
@@ -465,6 +497,7 @@ class Table():
 class FoundationPiles():
     def __init__(self):
         self.STARTING_POSITION_PILES = (520, 10)
+        self.GAP_CARDS_X = 170
 
         self.cardsOnPiles = {}
         for i in range(NUM_PILES):
@@ -502,32 +535,7 @@ class FoundationPiles():
         else:
             raise ImplementationError
 
-    def places_card(self, theCard, deck, table, index=None):
-        """
-        Given a card, places the card in its foundation pile IF possible
-        - If index is None, then the card is from the deck
-        - Else, index represents the index of the card in the table
-
-        return True if it placed the card
-        """
-        # If the card is from the deck
-        if index == None:
-
-            # If theCard can be moved in its foundation pile
-            if self.can_be_moved_in_foundation(theCard):
-
-                # The card is added to its foundation pile
-                self.adds_to_piles(theCard[0][1])
-
-                # And is deleted from its previous pile
-                deck.deletes_shown_card()
-
-                return True
-
-        # Else, the card is from the table
-        else:
-            print("oh well...")
-
+    """ ---------- Displaying ---------- """
     def displays_foundation_piles(self, screen):
         """
         Displays the foundation piles
@@ -536,10 +544,17 @@ class FoundationPiles():
         for pile in self.cardsOnPiles:
             if self.cardsOnPiles[pile] >= 1:
                 card = (Rank(self.cardsOnPiles[pile]), Suit(i))
-                positionOfPiles = (170*i + self.STARTING_POSITION_PILES[0], self.STARTING_POSITION_PILES[1])
+                positionOfPiles = (self.GAP_CARDS_X*i + self.STARTING_POSITION_PILES[0], self.STARTING_POSITION_PILES[1])
                 screen.blit(img_card(card), positionOfPiles)
             i += 1
 
+    def get_position_foundation(self, i):
+        """
+        Returns the position of i-th foundation pile
+        """
+        return (i * self.GAP_CARDS_X + self.STARTING_POSITION_PILES[0], self.STARTING_POSITION_PILES[1] , WIDTH, HEIGHT)
+
+    """ ---------- Movement ---------- """
     def moved_to_foundation(self, index, table, deck):
         """
         Returns True if the last card clicked on can be moved to its foundation pile, and makes the move.
@@ -568,3 +583,29 @@ class FoundationPiles():
 
         # 2.1.2 - Checks if it can be moved to another pile
         return table.move_to_pile(index, deck)
+
+    def places_card(self, theCard, deck, table, index=None):
+        """
+        Given a card, places the card in its foundation pile IF possible
+        - If index is None, then the card is from the deck
+        - Else, index represents the index of the card in the table
+
+        return True if it placed the card
+        """
+        # If the card is from the deck
+        if index == None:
+
+            # If theCard can be moved in its foundation pile
+            if self.can_be_moved_in_foundation(theCard):
+
+                # The card is added to its foundation pile
+                self.adds_to_piles(theCard[0][1])
+
+                # And is deleted from its previous pile
+                deck.deletes_shown_card()
+
+                return True
+
+        # Else, the card is from the table
+        else:
+            print("oh well...")
