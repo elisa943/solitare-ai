@@ -97,6 +97,12 @@ class Deck():
 
         # Else, does nothing
 
+    def deck_empty(self):
+        """
+        Returns True if the deck is empty.
+        """
+        return len(self.cardsShown) == 0 == len(self.stockpile)
+
     def picks_3_cards(self):
         """
         Adds up to 3 cards to self.cardsShown
@@ -183,6 +189,17 @@ class Table():
         # Checks if cardUp's suit is the same color as cardDown's
         if cardUp[1].value % 2 == cardDown[1].value % 2:
             return False
+
+        return True
+
+    def no_hidden_cards(self) -> bool:
+        """
+        Returns True if no cards are hidden
+        """
+        for piles in self.cardsOnTable:
+            for card in piles:
+                # If the card is hidden, returns False
+                if (card[1]): return False
 
         return True
 
@@ -453,9 +470,9 @@ class FoundationPiles():
         for i in range(NUM_PILES):
             self.cardsOnPiles[Suit(i)] = 0
 
-    def game_won(self) -> bool:
+    def piles_full(self) -> bool:
         """
-        Returns True if the game is won
+        Returns True if the foundation piles are full.
         """
         for i in range(NUM_PILES):
 
@@ -464,7 +481,7 @@ class FoundationPiles():
 
         return True
 
-    def can_be_moved_in_foundation(self, theCard):
+    def can_be_moved_in_foundation(self, theCard) -> bool:
         """
         Returns True of the card can be added on top of the pile foundation.
         """
