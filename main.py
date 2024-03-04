@@ -1,4 +1,3 @@
-import sys
 import time
 from pygame import mixer
 from generate import *
@@ -64,7 +63,10 @@ class Player():
             # 2.1 - Checks if the mouse clicked on the last card of a pile
             index = self.last_card_clicked_on(mouse_position)
             if index != None:
-                return self.foundationPiles.moved_to_foundation(index, self.table, self.deck)
+                if self.foundationPiles.moved_to_foundation(index, self.table, self.deck):
+                    self.score += 15
+                    return True
+                else: return False
 
             # 2.2 - Checks if the mouse clicked on an upper card. Detects which card was clicked on and takes its index in the table
             return self.table.upper_card(mouse_position, self.deck)
@@ -148,6 +150,7 @@ class Player():
         self.deck.displays_open_deck(screen)
         self.table.displays_table(screen)
         self.foundationPiles.displays_foundation_piles(screen)
+        self.displays_score(screen)
         pygame.display.update()
 
     def game_won(self):
@@ -160,8 +163,31 @@ class Player():
 
         return self.foundationPiles.piles_full() or (self.deck.deck_empty() and self.table.no_hidden_cards())
 
+    def displays_end_game(self, screen):
+        # Displays the background
+        screen.fill(BACKGROUND_COLOR)
+        self.displays_score(screen)
+
+    def displays_score(self, screen):
+
+        # Font
+        myFont_game = pygame.font.SysFont('Arial', 30)
+
+        # Displays the score
+        text_score = "SCORE :"
+        label_name_score = myFont_game.render(text_score, 1, BLACK)
+
+        text_score = str(self.score)
+        label_score = myFont_game.render(text_score, 1, BLACK)
+
+        screen.blit(label_name_score, (20, WINDOW_HEIGHT - 200)) # "SCORE :"
+        screen.blit(label_score, (150, WINDOW_HEIGHT - 200))    # [score]
+
 
     def close_pygame(self):
+        """
+        Closes everything.
+        """
         pygame.display.quit()
         pygame.quit()
         sys.exit()

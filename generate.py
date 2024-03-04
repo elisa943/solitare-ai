@@ -1,4 +1,5 @@
 import pygame
+import sys
 from enum import Enum
 import random
 
@@ -16,6 +17,7 @@ WIDTH = 140
 HEIGHT = 190
 
 BACKGROUND_COLOR = (34, 139, 34) # Forest green
+BLACK = (0, 0, 0)
 
 imgClosedCard = pygame.image.load("images/Cards/cardBack_red2.png")
 
@@ -337,7 +339,7 @@ class Table():
             deck.deletes_shown_card()
 
         else:
-
+            # List of cards to be moved
             to_be_moved = self.stack_of_cards(source, card)
 
             # Adds the stack of cards to the destination
@@ -349,6 +351,7 @@ class Table():
             # Reveals the last card from source index if possible
             if len(self.cardsOnTable[source]) > 0:
                 self.cardsOnTable[source][-1] = (self.cardsOnTable[source][-1][0], False)
+
 
     def get_position_last_card(self, index):
         """
@@ -464,6 +467,8 @@ class Table():
     def upper_card(self, mouse_position, deck) -> bool:
         """
         Return True if a move was made.
+        Return the gain/loss of the player's score ?
+        Return (gain, action_made)
         """
 
         # Detects which card was clicked on and takes its index in the table
@@ -471,11 +476,11 @@ class Table():
 
         # If the player didn't click on a card then do nothing
         if cardChosen == None:
-            return False
+            return False # return (0, False)
 
-        # If the card chosen is hidden then do nothing
+        # Else if the card chosen is hidden then do nothing
         elif self.cardsOnTable[cardChosen[0]][cardChosen[1]][1]:
-            return False
+            return False # return (0, False)
 
         # Else, the player clicked on a card shown (we know it's not a last card)
         else:
@@ -485,13 +490,13 @@ class Table():
 
             # If there are no compatibles indexes, does nothing : the card can't be moved
             if len(compatibleIndexes) == 0:
-                return False
+                return False # return (0, False)
 
             # Else, there is at least one possibility
             else:
                 card = self.cardsOnTable[cardChosen[0]][cardChosen[1]]
                 self.makes_move_in_table((cardChosen[0], compatibleIndexes[0], card[0]), deck)
-                return True
+                return True # return (?, True)
 
 
 class FoundationPiles():
