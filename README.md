@@ -3,7 +3,10 @@ Solitaire game. Implemented in Python/Pygame
 
 The game is playable now!
 
+To play, you just have to click on a card and it'll find its way!
+
 ![image info](images/image1.png)
+![image info](images/image2.png)
 
 Score system : 
 - If the player moves a card from the deck to the table, they win 5 points 

@@ -10,21 +10,6 @@ class Player():
         self.foundationPiles = foundationPiles
         self.score = 0
 
-    def is_mouse_pressed(self):
-        """
-        Returns the mouse's position if it's pressed
-        """
-        if pygame.mouse.get_pressed()[0]:
-            return pygame.mouse.get_pos()
-
-        return None
-
-    def is_mouse_in_rectangle(self, rectangle, mouse):
-        """
-        Returns True if the mouse's position is inside a rectangle (x, y, width, height).
-        """
-        return rectangle[0] <= mouse[0] <= rectangle[0] + rectangle[2] and rectangle[1] <= mouse[1] <= rectangle[1] + rectangle[3]
-
     def last_card_clicked_on(self, mouse_position):
         """
         Checks if the last card was clicked on and returns the index of the last card the mouse clicked on.
@@ -45,7 +30,7 @@ class Player():
         """
         Deals with different events :
         - If the player clicks on the deck : draws cards from deck or if the deck is empty, it rinitialize it.
-        - If the player clicks on a card that can be moved to a foundation pile : it does that move.
+        - If the player clicks on a card that can be moved to a foundation pile : it makes that move.
         - If the player clicks on a foundation pile
         """
         # 1 - Verifies that the mouse clicked on something
@@ -59,14 +44,15 @@ class Player():
 
         # 2 - If the mouse clicked on the table
         if self.is_mouse_in_rectangle((self.table.STARTING_POSITION_TABLE[0], self.table.STARTING_POSITION_TABLE[1], WINDOW_WIDTH, WINDOW_HEIGHT), mouse_position):
-
+            
             # 2.1 - Checks if the mouse clicked on the last card of a pile
             index = self.last_card_clicked_on(mouse_position)
             if index != None:
                 if self.foundationPiles.moved_to_foundation(index, self.table, self.deck):
                     self.score += 15
                     return True
-                else: return False
+                else: 
+                    return False
 
             # 2.2 - Checks if the mouse clicked on an upper card. Detects which card was clicked on and takes its index in the table
             (gain, move_made) = self.table.upper_card(mouse_position, self.deck)
@@ -97,15 +83,16 @@ class Player():
                     if self.foundationPiles.places_card(cardShown, self.deck, self.table):
                         self.score += 15
                         return True
-                    
-                    # If the stockpile is empty, reinitializes it. 
-                    elif len(self.deck.stockpile) == 0:
-                        self.deck.reinitialize_deck()
-                        return True
 
                     else:
                         (gain, move_made) = self.table.move_to_pile(-1, self.deck, fromDeck=True)
                         self.score += gain
+
+                        # If a move isn't made, checks if the stockpile is empty. 
+                        if not(move_made) and len(self.deck.stockpile) == 0:
+                            self.deck.reinitialize_deck()
+                            return True
+
                         return move_made
 
                 # Else, does nothing
@@ -142,6 +129,37 @@ class Player():
 
         return False
 
+    """ ---------- PREDICATES ----------"""
+    def is_mouse_pressed(self):
+        """
+        Returns the mouse's position if it's pressed
+        """
+        if pygame.mouse.get_pressed()[0]:
+            return pygame.mouse.get_pos()
+
+        return None
+
+    def is_mouse_in_rectangle(self, rectangle, mouse):
+        """
+        Returns True if the mouse's position is inside a rectangle (x, y, width, height).
+        """
+        return rectangle[0] <= mouse[0] <= rectangle[0] + rectangle[2] and rectangle[1] <= mouse[1] <= rectangle[1] + rectangle[3]
+
+    def game_won(self):
+        """
+        Returns True if the game is won, ie :
+            - If the foundation pile is full
+            OR
+            - If the deck is empty and no cards are hidden
+        """
+
+        if self.foundationPiles.piles_full() or (self.deck.deck_empty() and self.table.no_hidden_cards()):
+            self.score += 200 
+            return True 
+        else: return False
+
+    """ ---------- DISPLAYING ----------"""
+
     def initialize_pygame(self):
         # Initialization
         pygame.init()
@@ -164,19 +182,6 @@ class Player():
         self.displays_score(screen)
         pygame.display.update()
 
-    def game_won(self):
-        """
-        Returns True if the game is won, ie :
-            - If the foundation pile is full
-            OR
-            - If the deck is empty and no cards are hidden
-        """
-
-        if self.foundationPiles.piles_full() or (self.deck.deck_empty() and self.table.no_hidden_cards()):
-            self.score += 200 
-            return True 
-        else: return False
-
     def displays_end_game(self, screen):
         # Displays the background
         screen.fill(BACKGROUND_COLOR)
@@ -196,7 +201,6 @@ class Player():
 
         screen.blit(label_name_score, (20, WINDOW_HEIGHT - 200)) # "SCORE :"
         screen.blit(label_score, (150, WINDOW_HEIGHT - 200))    # [score]
-
 
     def close_pygame(self):
         """
