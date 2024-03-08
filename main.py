@@ -69,7 +69,9 @@ class Player():
                 else: return False
 
             # 2.2 - Checks if the mouse clicked on an upper card. Detects which card was clicked on and takes its index in the table
-            return self.table.upper_card(mouse_position, self.deck)
+            (gain, move_made) = self.table.upper_card(mouse_position, self.deck)
+            self.score += gain 
+            return move_made
 
         # 3 - Else, the mouse clicked on the top of the window
         else:
@@ -93,9 +95,18 @@ class Player():
                 # If the deck is not empty, places the card on the foundation piles IF possible
                 if cardShown != None:
                     if self.foundationPiles.places_card(cardShown, self.deck, self.table):
+                        self.score += 15
                         return True
+                    
+                    # If the stockpile is empty, reinitializes it. 
+                    elif len(self.deck.stockpile) == 0:
+                        self.deck.reinitialize_deck()
+                        return True
+
                     else:
-                        return self.table.move_to_pile(-1, self.deck, fromDeck=True)
+                        (gain, move_made) = self.table.move_to_pile(-1, self.deck, fromDeck=True)
+                        self.score += gain
+                        return move_made
 
                 # Else, does nothing
                 else:
@@ -103,7 +114,7 @@ class Player():
 
             # 3.2 Checks if the mouse clicked on the foundation piles
 
-            #
+            # Searches the Suit of the foundation pile picked
             suitFoundation = None
             for i in range(NUM_PILES):
                 # If the mouse clicked on a certain foundation pile, suitFoundation takes the index
@@ -122,7 +133,7 @@ class Player():
                         move = (-1, i, (rankFoundation, suitFoundation))
                         if self.table.can_be_moved_in_table(move, self.deck, fromFoundation=True):
                             # Makes the move
-                            self.table.makes_move_in_table(move, self.deck, fromFoundation=True)
+                            self.score += self.table.makes_move_in_table(move, self.deck, fromFoundation=True)
 
                             # Deletes the last card from foundation pile
                             self.foundationPiles.cardsOnPiles[suitFoundation] -= 1
@@ -161,7 +172,10 @@ class Player():
             - If the deck is empty and no cards are hidden
         """
 
-        return self.foundationPiles.piles_full() or (self.deck.deck_empty() and self.table.no_hidden_cards())
+        if self.foundationPiles.piles_full() or (self.deck.deck_empty() and self.table.no_hidden_cards()):
+            self.score += 200 
+            return True 
+        else: return False
 
     def displays_end_game(self, screen):
         # Displays the background
