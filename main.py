@@ -1,6 +1,5 @@
 import time
 from pygame import mixer
-from generate import *
 from ai import *
 
 class Player():
@@ -216,8 +215,11 @@ def main():
     theTable = Table(theDeck)
     theFoundationPiles = FoundationPiles()
     thePlayer = Player(theDeck, theTable, theFoundationPiles)
+    theAIPlayer = PlayerAI(theDeck, theTable, theFoundationPiles)
     screen = thePlayer.initialize_pygame()
     running = True
+
+    print(theAIPlayer.possible_actions())
 
     while running:
         thePlayer.draws_window(screen)
