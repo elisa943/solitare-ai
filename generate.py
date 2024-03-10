@@ -310,11 +310,11 @@ class Table():
         if fromDeck == None:
 
             (i, j) = position
+            card = self.cardsOnTable[i][j]
 
             # Checks if it can be moved to another pile in the table
             for index in range(len(self.cardsOnTable)):
                 if i != index:
-                    card = self.cardsOnTable[i][j]
 
                     if self.can_be_moved_in_table((i, index, card[0]), deck):
                         compatibleIndexes.append(index)
