@@ -379,8 +379,7 @@ class Table():
             # Checks if the source index contains the card
             card = move[2]
             if self.contains_card(source, card) == None:
-                raise ImplementationError
-
+                return False 
 
         # If the destination pile is empty and the card to be placed is a KING, then the card can be moved
         if len(self.cardsOnTable[destination]) == 0 and card[0] == Rank(13):

@@ -1,4 +1,5 @@
 from generate import *
+from player import *
 
 class DRAW_CARDS():
     pass 
@@ -26,11 +27,12 @@ class PILES_TO_TABLE():
         self.tableIndex = tableIndex
         self.suit = suit 
 
-class PlayerAI():
+class PlayerAI(Player):
     def __init__(self, deck, table, foundationPiles):
         self.deck = deck
         self.table = table
         self.foundationPiles = foundationPiles
+        # super().__init__(deck, table, foundationPiles)
 
     def possible_actions_from_foundation(self):
         """
@@ -82,8 +84,9 @@ class PlayerAI():
         # From table to table
         for i in range(len(self.table.cardsOnTable)):
             for j in range(len(self.table.cardsOnTable[i])):
-                for index in self.table.compatible_index((i, j), self.deck):
-                    possibleActions.append(TABLE_TO_TABLE((i, j), index))
+                if i != j:
+                    for index in self.table.compatible_index((i, j), self.deck):
+                        possibleActions.append(TABLE_TO_TABLE((i, j), index))
 
         # From table to foundation piles 
         for i in range(len(self.table.cardsOnTable)):
@@ -102,8 +105,8 @@ class PlayerAI():
         possibleActions = []
 
         # ! From Table 
-        #fromTable = self.possible_actions_from_table()
-        #for m in fromTable: possibleActions.append(m)
+        fromTable = self.possible_actions_from_table()
+        for m in fromTable: possibleActions.append(m)
 
 
         # From Foundation Piles 
