@@ -3,6 +3,7 @@ from pygame import mixer
 from ai import *
 
 def main():
+
     theDeck = Deck()
     theTable = Table(theDeck)
     theFoundationPiles = FoundationPiles()
@@ -12,6 +13,11 @@ def main():
     running = True
 
     print(theAIPlayer.possible_actions())
+
+    # Plays music
+    pygame.mixer.init
+    mixer.music.load("music/calm_music.mp3")
+    mixer.music.play(-1)
 
     while running:
         thePlayer.draws_window(screen)

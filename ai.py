@@ -56,22 +56,23 @@ class PlayerAI(Player):
         possibleActions = []
 
         cardFromDeck = self.deck.picks_card(withdraw=False)
-        rank = cardFromDeck[0].value 
-        suit = cardFromDeck[1]
+        if cardFromDeck != None: 
+            rank = cardFromDeck[0].value 
+            suit = cardFromDeck[1]
 
-        # - From deck to foundation piles 
-        if self.foundationPiles.can_be_moved_in_foundation((cardFromDeck, False)):
-            possibleActions.append(DECK_TO_PILES(suit))
+            # - From deck to foundation piles 
+            if self.foundationPiles.can_be_moved_in_foundation((cardFromDeck, False)):
+                possibleActions.append(DECK_TO_PILES(suit))
 
-        # - From deck to table 
-        for i in range(len(self.table.cardsOnTable)):
-            if len(self.table.cardsOnTable[i]) != 0:
-                # Takes the last card from the i-th pile 
-                lastCard = self.table.cardsOnTable[i][-1][0]
+            # - From deck to table 
+            for i in range(len(self.table.cardsOnTable)):
+                if len(self.table.cardsOnTable[i]) != 0:
+                    # Takes the last card from the i-th pile 
+                    lastCard = self.table.cardsOnTable[i][-1][0]
 
-                # Checks if they're compatible 
-                if self.table.cards_compatible(lastCard, cardFromDeck):
-                    possibleActions.append(DECK_TO_TABLE(i))
+                    # Checks if they're compatible 
+                    if self.table.cards_compatible(lastCard, cardFromDeck):
+                        possibleActions.append(DECK_TO_TABLE(i))
 
         return possibleActions
 
