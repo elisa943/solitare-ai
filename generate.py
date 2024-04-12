@@ -66,6 +66,7 @@ def img_card(card):
     rank_string = str(rank.value)
     return pygame.image.load("images/Cards/card" + suit_string + rank_string + ".png")
 
+
 class Deck():
     def __init__(self):
         self.stockpile = []
@@ -84,7 +85,7 @@ class Deck():
 
     def picks_card(self, withdraw=True):
         """
-        Picks one card at the top of the deck
+        Picks one card at the top of the deck (Rank, Suit)
         """
 
         cardPicked = None

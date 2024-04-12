@@ -1,14 +1,18 @@
 import time
 from pygame import mixer
 from ai import *
+from game import *
 
 def main():
-
+    
     theDeck = Deck()
     theTable = Table(theDeck)
     theFoundationPiles = FoundationPiles()
     thePlayer = Player(theDeck, theTable, theFoundationPiles)
-    theAIPlayer = PlayerAI(theDeck, theTable, theFoundationPiles)
+    theAIPlayer = PlayerAI(theDeck, theTable, theFoundationPiles, thePlayer)
+
+    theGame = Game(theDeck, theTable, theFoundationPiles, 0)
+
     screen = thePlayer.initialize_pygame()
     running = True
 

@@ -19,7 +19,7 @@ class TABLE_TO_PILES():
 
 class TABLE_TO_TABLE():
     def __init__(self, source, destination):
-        self.source = source 
+        self.source = source # (i, j)
         self.destination = destination 
 
 class PILES_TO_TABLE():
@@ -28,11 +28,13 @@ class PILES_TO_TABLE():
         self.suit = suit 
 
 class PlayerAI(Player):
-    def __init__(self, deck, table, foundationPiles):
+    def __init__(self, deck, table, foundationPiles, player):
         self.deck = deck
         self.table = table
         self.foundationPiles = foundationPiles
+        self.player = player
         # super().__init__(deck, table, foundationPiles)
+        self.history = []
 
     def possible_actions_from_foundation(self):
         """
@@ -98,14 +100,13 @@ class PlayerAI(Player):
                 
         return possibleActions
 
-
     def possible_actions(self):
         """
         Returns list of all possible actions. 
         """
         possibleActions = []
 
-        # ! From Table 
+        # From Table 
         fromTable = self.possible_actions_from_table()
         for m in fromTable: possibleActions.append(m)
 
@@ -122,3 +123,52 @@ class PlayerAI(Player):
         possibleActions.append(DRAW_CARDS())
 
         return possibleActions
+
+    def result(self, action):
+        """
+        result() applies an action to a board. The action is supposed to be legal. 
+        """
+        copy = copy.deepcopy(self)
+        
+        match type(action):
+            case DRAW_CARDS():
+                copy.deck.picks_3_cards()
+            case DECK_TO_TABLE():
+                copy.table.makes_move_in_table((-1, action.suit, copy.deck.picks_card(withdraw=False)), copy.deck, fromDeck=True)
+            case DECK_TO_PILES():
+                copy.foundationPiles.places_card(copy.deck.picks_card(withdraw=False), copy.deck, copy.table)
+            case TABLE_TO_PILES():
+                copy.foundationPiles.places_card()
+            case TABLE_TO_TABLE():
+                copy.table.makes_move_in_table((action.source[0], action.destination, copy.table.cardsOnTable[action.source[1]][action.source[1]]), copy.deck)
+            case PILES_TO_TABLE():
+                copy.table.makes_move_in_table((action.tableIndex, -1, (copy.table.cardsOnTable[action.tableIndex][-1], action.suit)), copy.deck, fromFoundation=True)
+            case _: 
+                raise ImplementationError
+        
+        return copy 
+
+
+    def terminal(self) -> bool:
+        """
+        TODO : Returns True if a game is stuck <=> impossible to win
+        """
+        possibleActions = self.possible_actions()
+
+        for action in possibleActions:
+            if type(action) != DRAW_CARDS():
+                return False
+
+        return True
+    
+    def state_value(self):
+        return self.player.score
+
+    """ MiniMax Algorithm : Impossible because only player -> MaxMax lols """
+
+    def minimax(self, depth):
+        """ 
+        Returns an optimal action. 
+        """
+        if self.terminal() or self.player.game_won():
+            return self.state_value()
