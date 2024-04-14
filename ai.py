@@ -28,12 +28,13 @@ class PILES_TO_TABLE():
         self.suit = suit 
 
 class PlayerAI(Player):
-    def __init__(self, deck, table, foundationPiles, player):
+    def __init__(self, deck, table, foundationPiles):
         self.deck = deck
         self.table = table
         self.foundationPiles = foundationPiles
-        self.player = player
+        #self.player = player
         # super().__init__(deck, table, foundationPiles)
+        self.score = 0
         self.history = []
 
     def possible_actions_from_foundation(self):
@@ -57,7 +58,7 @@ class PlayerAI(Player):
         """
         possibleActions = []
 
-        cardFromDeck = self.deck.picks_card(withdraw=False)
+        cardFromDeck = self.deck.cardShown()
         if cardFromDeck != None: 
             rank = cardFromDeck[0].value 
             suit = cardFromDeck[1]
@@ -124,6 +125,33 @@ class PlayerAI(Player):
 
         return possibleActions
 
+    def displays_possible_actions_in_terminal(self):
+        """
+        Displays all possible actions in English
+        """
+        possible_actions = self.possible_actions()
+        print(chr(27) + "[2J")
+        print("All possible actions are : ")
+        print(possible_actions)
+        for action in possible_actions:
+            match action:
+                case DRAW_CARDS():
+                    print("- Draw cards.")
+                case DECK_TO_TABLE():
+                    card = self.deck.cardShown()
+                    print("- Move card", card,"from deck to the", action.tableIndex + 1,"th table.")
+                case DECK_TO_PILES():
+                    card = self.deck.cardShown()
+                    print("- Move card ", card,"from deck to its foundation pile.")
+                case TABLE_TO_PILES():
+                    print("- Move card from the", action.tableIndex + 1, "th table to its foundation pile.")
+                case TABLE_TO_TABLE():
+                    print("- Move card from the", action.source[0] + 1, "ith table to the", action.source[1] + 1, "th table.")
+                case PILES_TO_TABLE():
+                    print("- Move card from the", action.suit, "foundation pile to the", action.tableIndex + 1, "th table.")
+                case _: 
+                    raise ImplementationError
+
     def result(self, action):
         """
         result() applies an action to a board. The action is supposed to be legal. 
@@ -134,9 +162,9 @@ class PlayerAI(Player):
             case DRAW_CARDS():
                 copy.deck.picks_3_cards()
             case DECK_TO_TABLE():
-                copy.table.makes_move_in_table((-1, action.suit, copy.deck.picks_card(withdraw=False)), copy.deck, fromDeck=True)
+                copy.table.makes_move_in_table((-1, action.suit, copy.deck.cardShown()), copy.deck, fromDeck=True)
             case DECK_TO_PILES():
-                copy.foundationPiles.places_card(copy.deck.picks_card(withdraw=False), copy.deck, copy.table)
+                copy.foundationPiles.places_card(copy.deck.cardShown(), copy.deck, copy.table)
             case TABLE_TO_PILES():
                 copy.foundationPiles.places_card()
             case TABLE_TO_TABLE():
@@ -147,7 +175,6 @@ class PlayerAI(Player):
                 raise ImplementationError
         
         return copy 
-
 
     def terminal(self) -> bool:
         """
@@ -160,15 +187,13 @@ class PlayerAI(Player):
                 return False
 
         return True
-    
+    """
     def state_value(self):
         return self.player.score
 
-    """ MiniMax Algorithm : Impossible because only player -> MaxMax lols """
-
+    MiniMax Algorithm : Impossible because only player -> MaxMax lols
     def minimax(self, depth):
-        """ 
-        Returns an optimal action. 
-        """
+        # Returns an optimal action. 
         if self.terminal() or self.player.game_won():
             return self.state_value()
+    """

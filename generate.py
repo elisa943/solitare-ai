@@ -83,22 +83,6 @@ class Deck():
         # Deck is shuffled at the very beginning
         random.shuffle(self.stockpile)
 
-    def picks_card(self, withdraw=True):
-        """
-        Picks one card at the top of the deck (Rank, Suit)
-        """
-
-        cardPicked = None
-
-        if len(self.stockpile) > 0:
-            cardPicked = self.stockpile.pop(-1)
-
-            # If asked not to withdraw the card, puts it back in the deck
-            if not(withdraw):
-                self.stockpile.append(cardPicked)
-
-        return cardPicked
-
     def get_position_deck(self, open=False):
         """
         Returns (x, y, width, height) of the deck
@@ -116,6 +100,29 @@ class Deck():
         return len(self.cardsShown) == 0 == len(self.stockpile)
 
     """ ---------- PROCEDURES ----------"""
+
+    def picks_card(self, withdraw=True):
+        """
+        Picks one card at the top of the deck (Rank, Suit)
+        """
+        cardPicked = None
+
+        if len(self.stockpile) > 0:
+            cardPicked = self.stockpile.pop(-1)
+
+            # If asked not to withdraw the card, puts it back in the deck
+            if not(withdraw):
+                self.stockpile.append(cardPicked)
+        
+        return cardPicked
+    
+    def cardShown(self):
+        """
+        Returns the card shown on the deck if there is one
+        """
+        if len(self.cardsShown) > 0:
+            return self.cardsShown[max(-3, -len(self.cardsShown))]
+        else: return None 
 
     def reinitialize_deck(self):
         """

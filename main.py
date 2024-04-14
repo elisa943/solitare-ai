@@ -8,15 +8,15 @@ def main():
     theDeck = Deck()
     theTable = Table(theDeck)
     theFoundationPiles = FoundationPiles()
-    thePlayer = Player(theDeck, theTable, theFoundationPiles)
-    theAIPlayer = PlayerAI(theDeck, theTable, theFoundationPiles, thePlayer)
+    #thePlayer = Player(theDeck, theTable, theFoundationPiles)
+    theAIPlayer = PlayerAI(theDeck, theTable, theFoundationPiles)
 
     theGame = Game(theDeck, theTable, theFoundationPiles, 0)
 
-    screen = thePlayer.initialize_pygame()
+    screen = theAIPlayer.initialize_pygame()
     running = True
 
-    print(theAIPlayer.possible_actions())
+    theAIPlayer.displays_possible_actions_in_terminal()
 
     # Plays music
     pygame.mixer.init
@@ -24,21 +24,22 @@ def main():
     mixer.music.play(-1)
 
     while running:
-        thePlayer.draws_window(screen)
+        theAIPlayer.draws_window(screen)
 
         # Quit
         for event in pygame.event.get():
-            if thePlayer.event_triggered(): print(theAIPlayer.possible_actions())
+            if theAIPlayer.event_triggered(): 
+                theAIPlayer.displays_possible_actions_in_terminal()
             if event.type == pygame.QUIT:
-                print(thePlayer.score)
+                print(theAIPlayer.score)
                 running = False
 
         # If the game is won, close the game.
-        if thePlayer.game_won():
-            print(thePlayer.score)
+        if theAIPlayer.game_won():
+            print(theAIPlayer.score)
             running = False
 
-    thePlayer.close_pygame()
+    theAIPlayer.close_pygame()
 
 
 if __name__ == "__main__":
