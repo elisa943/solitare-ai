@@ -27,9 +27,11 @@ class Player():
     def event_triggered(self):
         """
         Deals with different events :
-        - If the player clicks on the deck : draws cards from deck or if the deck is empty, it rinitialize it.
+        - If the player clicks on the deck : draws cards from deck or if the deck is empty, it reinitialize it.
         - If the player clicks on a card that can be moved to a foundation pile : it makes that move.
-        - If the player clicks on a foundation pile
+        - If the player clicks on a foundation pile, places the card to a compatible pile
+
+        If a move is made, event_triggered returns True, else False. 
         """
         # 1 - Verifies that the mouse clicked on something
 
@@ -186,7 +188,6 @@ class Player():
         self.displays_score(screen)
 
     def displays_score(self, screen):
-
         # Font
         myFont_game = pygame.font.SysFont('Arial', 30)
 

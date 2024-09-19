@@ -17,7 +17,7 @@ Score system :
 
 The AI part of the project is coming soon...
 
-A big thanks to Kenney (Kenney.nl) for their cards !
+A big thanks to Kenney (Kenney.nl) for their card designs !
 
 https://opengameart.org/content/boardgame-pack
 

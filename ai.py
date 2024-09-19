@@ -152,6 +152,12 @@ class PlayerAI(Player):
                 case _: 
                     raise ImplementationError
 
+    def get_position_button():
+        """
+        TODO : Returns the position of the "auto move" button
+        """
+        return None
+
     def result(self, action):
         """
         result() applies an action to a board. The action is supposed to be legal. 

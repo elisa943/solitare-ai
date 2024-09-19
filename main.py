@@ -16,8 +16,6 @@ def main():
     screen = theAIPlayer.initialize_pygame()
     running = True
 
-    theAIPlayer.displays_possible_actions_in_terminal()
-
     # Plays music
     pygame.mixer.init
     mixer.music.load("music/calm_music.mp3")
@@ -29,7 +27,8 @@ def main():
         # Quit
         for event in pygame.event.get():
             if theAIPlayer.event_triggered(): 
-                theAIPlayer.displays_possible_actions_in_terminal()
+                #theAIPlayer.displays_possible_actions_in_terminal()
+                print("Move made")
             if event.type == pygame.QUIT:
                 print(theAIPlayer.score)
                 running = False

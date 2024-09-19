@@ -121,7 +121,8 @@ class Deck():
         Returns the card shown on the deck if there is one
         """
         if len(self.cardsShown) > 0:
-            return self.cardsShown[max(-3, -len(self.cardsShown))]
+            #return self.cardsShown[max(-3, -len(self.cardsShown))]
+            return self.cardsShown[-1]
         else: return None 
 
     def reinitialize_deck(self):
@@ -156,7 +157,8 @@ class Deck():
         """
         # If some cards are shown
         if len(self.cardsShown) > 0:
-            self.cardsShown.pop(max(NUM_CARDS_SHOWN, -len(self.cardsShown)))
+            #self.cardsShown.pop(max(NUM_CARDS_SHOWN, -len(self.cardsShown)))
+            self.cardsShown.pop(-1)
 
     """ ---------- DISPLAYING ----------"""
     def displays_closed_deck(self, screen):
@@ -170,8 +172,9 @@ class Deck():
         """
         Displays 3 cards if possible
         """
-        for i in range(min(-NUM_CARDS_SHOWN, len(self.cardsShown))):
-            imgOpenDeck = img_card(self.cardsShown[-1-i])
+        num_cards = min(-NUM_CARDS_SHOWN, len(self.cardsShown))
+        for i in range(num_cards):
+            imgOpenDeck = img_card(self.cardsShown[-num_cards+i])
             positionOfShownCards = (self.OPEN_DECK_POSITION[0] - self.GAP_CARDS_X*i, self.OPEN_DECK_POSITION[1])
             screen.blit(imgOpenDeck, positionOfShownCards)
 
@@ -244,14 +247,15 @@ class Table():
             return -15
 
         elif fromDeck:
-            to_be_moved = [(deck.cardsShown[max(NUM_CARDS_SHOWN, -len(deck.cardsShown))], False)]
-
+            # to_be_moved = [(deck.cardsShown[max(NUM_CARDS_SHOWN, -len(deck.cardsShown))], False)]
+            to_be_moved = [(deck.cardsShown[-1], False)]
+            
             # Adds the stack of cards to the destination
             self.adds_stack_of_cards(destination, to_be_moved)
 
             # Deletes the stack of cards of the deck
             deck.deletes_shown_card()
-
+            
             # The player gains 5 points
             return 5
 
@@ -328,8 +332,8 @@ class Table():
                         compatibleIndexes.append(index)
 
         else:
+            card = deck.cardsShown[-1]
             for index in range(len(self.cardsOnTable)):
-                card = deck.cardsShown[max(NUM_CARDS_SHOWN, -len(deck.cardsShown))]
                 if self.can_be_moved_in_table((-1, index, card), deck, fromDeck=True):
                     compatibleIndexes.append(index)
 
@@ -380,7 +384,7 @@ class Table():
 
         # If the card is from the deck :
         elif fromDeck:
-            card = deck.cardsShown[max(NUM_CARDS_SHOWN, -len(deck.cardsShown))]
+            card = deck.cardsShown[-1]
 
         # Else, the card is from the deck.
         else:
